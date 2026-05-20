@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-router_fazendas = APIRouter(prefix="/fazendas")
+router_fazendas = APIRouter(prefix='/fazendas', tags=['Fazendas'])
+
 
 class FazendaInput(BaseModel):
     nome: str
@@ -9,64 +10,66 @@ class FazendaInput(BaseModel):
     area_total_hectares: float
 
 
-class FazendaOutput(BaseModel):
-    id: int
-    nome: str
-    localizacao: str
-    area_total_hectares: float
-
-
 banco_fazendas = []
-contador_id = 1
-
-@router_fazendas.get('/')  
-
-def consultar_fazendas():
-    pass
 
 
-@router_fazendas.get('/{id}')  
+@router_fazendas.post('/')
+def cadastrar_fazenda(dados: FazendaInput):
+    novo_id = len(banco_fazendas) + 1
 
-def consultar_fazenda(id: int):
-    pass
-
-
-@router_fazendas.post("/", response_model=FazendaOutput, status_code=201)
-def cadastrar_fazenda(fazenda: FazendaInput = Body(...)):
-    global contador_id
-
-    # validação
-    for fazenda_existente in banco_fazendas:
-        if (
-            fazenda_existente["nome"] == fazenda.nome
-            and fazenda_existente["localizacao"] == fazenda.localizacao
-            and fazenda_existente["area_total_hectares"] == fazenda.area_total_hectares
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="Já existe uma fazenda com esses mesmos dados."
-            )
-
-    nova_fazenda = {
-        "id": contador_id,
-        "nome": fazenda.nome,
-        "localizacao": fazenda.localizacao,
-        "area_total_hectares": fazenda.area_total_hectares,
+    fazenda = {
+        'id': novo_id,
+        'nome': dados.nome,
+        'localizacao': dados.localizacao,
+        'area_total_hectares': dados.area_total_hectares
     }
 
-    banco_fazendas.append(nova_fazenda)
-    contador_id += 1
+    banco_fazendas.append(fazenda)
 
-    return nova_fazenda
-
-
-@router_fazendas.put('/{id}')  
-
-def alterar_fazenda(id: int):
-    pass
+    return {
+        'mensagem': 'Fazenda cadastrada com sucesso',
+        'dados': fazenda
+    }
 
 
-@router_fazendas.delete('/{id}')  
+@router_fazendas.get('/')
+def consultar_fazendas():
+    return banco_fazendas
 
+
+@router_fazendas.get('/{id}')
+def consultar_fazenda(id: int):
+    for fazenda in banco_fazendas:
+        if fazenda['id'] == id:
+            return fazenda
+
+    raise HTTPException(status_code=404, detail='Fazenda não encontrada')
+
+
+@router_fazendas.put('/{id}')
+def alterar_fazenda(id: int, dados: FazendaInput):
+    for fazenda in banco_fazendas:
+        if fazenda['id'] == id:
+            fazenda['nome'] = dados.nome
+            fazenda['localizacao'] = dados.localizacao
+            fazenda['area_total_hectares'] = dados.area_total_hectares
+
+            return {
+                'mensagem': 'Fazenda atualizada',
+                'dados': fazenda
+            }
+
+    raise HTTPException(status_code=404, detail='Fazenda não encontrada')
+
+
+@router_fazendas.delete('/{id}')
 def deletar_fazenda(id: int):
-    pass
+    for fazenda in banco_fazendas:
+        if fazenda['id'] == id:
+            banco_fazendas.remove(fazenda)
+
+            return {
+                'mensagem': 'Fazenda removida'
+            }
+
+    raise HTTPException(status_code=404, detail='Fazenda não encontrada')
