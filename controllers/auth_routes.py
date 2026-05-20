@@ -1,15 +1,20 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
-router_auth = APIRouter(prefix="/auth")
+router_auth = APIRouter(
+    prefix='/auth',
+    tags=['Autenticação']
+)
 
-@router_auth.post("/users")
-def cadastrar_usuario():
-    pass
 
-@router_auth.post("/sessions")
-def create_session():
-    pass
+class Login(BaseModel):
+    email: str
+    senha: str
 
-@router_auth.get("/users/me")
-def get_me():
-    pass
+
+@router_auth.post('/login')
+def login(usuario: Login):
+    return {
+        'token': '123456',
+        'usuario': usuario.email
+    }
