@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from database import get_db
-from model import Fazenda
+from sigFaz.backend.app.database import get_db
+from app.controllers.model import Fazenda
 
 router_talhoes = APIRouter(prefix="/talhoes")
 
