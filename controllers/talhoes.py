@@ -1,6 +1,17 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from database import get_db
+from model import Fazenda
 
 router_talhoes = APIRouter(prefix="/talhoes")
+
+class talhao_base(BaseModel):
+    area: str
+    tipo_cultura: str
+    idade: int
+    volume_estimado: float
+    id_fazenda: int 
 
 @router_talhoes.get('/')  
 

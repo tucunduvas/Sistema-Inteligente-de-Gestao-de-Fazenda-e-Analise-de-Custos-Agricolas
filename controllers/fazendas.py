@@ -1,75 +1,105 @@
-from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from database import get_db
+from model import Fazenda
 
-router_fazendas = APIRouter(prefix='/fazendas', tags=['Fazendas'])
 
-
-class FazendaInput(BaseModel):
+class fazenda_base(BaseModel):
     nome: str
     localizacao: str
-    area_total_hectares: float
+    areaTotal: float
 
 
-banco_fazendas = []
+class fazenda_create(fazenda_base):
+    pass
 
 
-@router_fazendas.post('/')
-def cadastrar_fazenda(dados: FazendaInput):
-    novo_id = len(banco_fazendas) + 1
+class fazenda_response(fazenda_base):
+    id: int
 
-    fazenda = {
-        'id': novo_id,
-        'nome': dados.nome,
-        'localizacao': dados.localizacao,
-        'area_total_hectares': dados.area_total_hectares
-    }
-
-    banco_fazendas.append(fazenda)
-
-    return {
-        'mensagem': 'Fazenda cadastrada com sucesso',
-        'dados': fazenda
-    }
+    class Config:
+        from_attributes = True
+        
 
 
-@router_fazendas.get('/')
-def consultar_fazendas():
-    return banco_fazendas
+router_fazendas = APIRouter(prefix="/fazendas", tags=["Fazendas"])
+
+@router_fazendas.post("/", response_model=fazenda_response)
+def cadastrar_fazenda(dados: fazenda_create, db: Session = Depends(get_db)):
+
+    fazenda_existente = db.query(Fazenda).filter(
+        Fazenda.nome == dados.nome,
+        Fazenda.localizacao == dados.localizacao
+    ).first()
+
+    if fazenda_existente:
+        raise HTTPException(
+            status_code=400,
+            detail="Já existe uma fazenda com esse nome nessa localização"
+        )
+
+    nova_fazenda = Fazenda(**dados.dict())
+
+    db.add(nova_fazenda)
+    db.commit()
+    db.refresh(nova_fazenda)
+
+    return nova_fazenda
+
+@router_fazendas.get("/", response_model=list[fazenda_response])
+def consultar_fazendas(db: Session = Depends(get_db)):
+    return db.query(Fazenda).all()
 
 
-@router_fazendas.get('/{id}')
-def consultar_fazenda(id: int):
-    for fazenda in banco_fazendas:
-        if fazenda['id'] == id:
-            return fazenda
+@router_fazendas.get("/{id}", response_model=fazenda_response)
+def consultar_fazenda(id: int, db: Session = Depends(get_db)):
+    
+    fazenda = db.query(Fazenda).filter(Fazenda.id == id).first()
 
-    raise HTTPException(status_code=404, detail='Fazenda não encontrada')
+    if not fazenda:
+        raise HTTPException(status_code=404, detail="Fazenda não encontrada")
 
+    return fazenda
 
-@router_fazendas.put('/{id}')
-def alterar_fazenda(id: int, dados: FazendaInput):
-    for fazenda in banco_fazendas:
-        if fazenda['id'] == id:
-            fazenda['nome'] = dados.nome
-            fazenda['localizacao'] = dados.localizacao
-            fazenda['area_total_hectares'] = dados.area_total_hectares
+@router_fazendas.put("/{id}", response_model=fazenda_response)
+def alterar_fazenda(id: int, dados: fazenda_create, db: Session = Depends(get_db)):
+    
+    fazenda = db.query(Fazenda).filter(Fazenda.id == id).first()
+    
+    fazenda_existente = db.query(Fazenda).filter(
+        Fazenda.nome == dados.nome,
+        Fazenda.localizacao == dados.localizacao,
+        Fazenda.id != id  
+    ).first()
 
-            return {
-                'mensagem': 'Fazenda atualizada',
-                'dados': fazenda
-            }
+    if fazenda_existente:
+        raise HTTPException(
+            status_code=400,
+            detail="Já existe uma fazenda com esse nome nessa localização"
+        )
+        
+    if not fazenda:
+        raise HTTPException(status_code=404, detail="Fazenda não encontrada")
 
-    raise HTTPException(status_code=404, detail='Fazenda não encontrada')
+    for key, value in dados.dict().items():
+        setattr(fazenda, key, value)
 
+    db.commit()
+    db.refresh(fazenda)
 
-@router_fazendas.delete('/{id}')
-def deletar_fazenda(id: int):
-    for fazenda in banco_fazendas:
-        if fazenda['id'] == id:
-            banco_fazendas.remove(fazenda)
+    return fazenda
 
-            return {
-                'mensagem': 'Fazenda removida'
-            }
+@router_fazendas.delete("/{id}")
+def deletar_fazenda(id: int, db: Session = Depends(get_db)):
+    fazenda = db.query(Fazenda).filter(Fazenda.id == id).first()
 
-    raise HTTPException(status_code=404, detail='Fazenda não encontrada')
+    if not fazenda:
+        raise HTTPException(status_code=404, detail="Fazenda não encontrada")
+
+    db.delete(fazenda)
+    db.commit()
+
+    return {"mensagem": "Fazenda removida"}
+
+# se remover uma fazenda remove também os talhoes dela
