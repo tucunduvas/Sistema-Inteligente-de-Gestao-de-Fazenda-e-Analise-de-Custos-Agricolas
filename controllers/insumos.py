@@ -33,4 +33,3 @@ def consultar_defensivos():
 
 def cadastrar_defensivos():
     pass
-
