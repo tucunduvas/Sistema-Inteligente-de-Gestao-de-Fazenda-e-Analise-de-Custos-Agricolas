@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Time, TIMESTAMP
 from sqlalchemy.orm import relationship
-from database import Base
+from sigFaz.backend.app.database import Base
 
 
 class Fazenda(Base):

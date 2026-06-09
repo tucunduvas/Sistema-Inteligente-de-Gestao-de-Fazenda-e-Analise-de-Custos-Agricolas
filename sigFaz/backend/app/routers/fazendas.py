@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db
-from model import Fazenda
+from sigFaz.backend.app.database import get_db
+from app.controllers.model import Fazenda
 
 
 class fazenda_base(BaseModel):
