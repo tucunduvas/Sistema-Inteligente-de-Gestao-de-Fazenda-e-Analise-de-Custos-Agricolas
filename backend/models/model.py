@@ -34,9 +34,6 @@ class Safra(BaseModel):
 
 class Cultura(BaseModel):
     nome: str
-    safra: str | None = ""
-    data: str | None = ""
-    quantidade: float | None = 0
     tipo: str | None = None
     ciclo_dias: int | None = None
 

@@ -1,115 +1,92 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
+from psycopg2.extras import RealDictCursor
 from models.model import Cultura
 from db import conectar
 
 router_culturas = APIRouter(
     prefix="/culturas",
-    tags=["Culturas"]
+    tags=["Cultura"]
 )
 
-@router_culturas.post("/")
+
+@router_culturas.post('/', status_code=status.HTTP_201_CREATED)
 def cadastrar_cultura(cultura: Cultura):
-
     conn = conectar()
-    cursor = conn.cursor()
-
-    # Mapeamento compatível com o front:
-    # Front envia: { nome, tipo, ciclo_dias }
-    # No model:
-    #   tipo -> safra
-    #   ciclo_dias -> quantidade
-    cursor.execute("""
-        INSERT INTO Cultura
-        (nome, safra, data, quantidade)
-        VALUES (%s,%s,%s,%s)
-    """, (
-        cultura.nome,
-        cultura.tipo,
-        cultura.data,
-        cultura.ciclo_dias
-    ))
-
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-    return {"mensagem": "Cultura cadastrada"}
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                INSERT INTO cultura (nome, tipo, ciclo_dias)
+                VALUES (%s, %s, %s)
+                RETURNING id
+            """
+            valores = (cultura.nome, cultura.tipo, cultura.ciclo_dias)
+            cursor.execute(sql, valores)
+            novo_id = cursor.fetchone()[0]
+            conn.commit()
+        return {"mensagem": "Cultura cadastrada", "id": novo_id}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao cadastrar: {e}")
+    finally:
+        conn.close()
 
 
-@router_culturas.get("/")
+@router_culturas.get('/')
 def listar_culturas():
-
     conn = conectar()
-    cursor = conn.cursor()
-
-    # Front espera:
-    # { id, nome, tipo, ciclo_dias }
-    # Banco (Cultura) está com colunas: id, nome, safra, data, quantidade
-    # Onde: tipo = safra; ciclo_dias = quantidade
-    cursor.execute("SELECT id, nome, safra, data, quantidade FROM Cultura")
-    rows = cursor.fetchall()
-
-    dados = [
-        {
-            "id": r[0],
-            "nome": r[1],
-            "tipo": r[2] if r[2] is not None else "",
-            "ciclo_dias": r[4] if r[4] is not None else 0,
-        }
-        for r in rows
-    ]
-
-    cursor.close()
-    conn.close()
-
-    return dados
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT id, nome, tipo, ciclo_dias FROM cultura")
+            return cursor.fetchall()
+    finally:
+        conn.close()
 
 
-@router_culturas.put("/{id}")
-def atualizar_cultura(id: int, cultura: Cultura):
-
+@router_culturas.put('/{id}')
+def alterar_cultura(id: int, cultura: Cultura):
     conn = conectar()
-    cursor = conn.cursor()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                UPDATE cultura
+                SET nome=%s, tipo=%s, ciclo_dias=%s
+                WHERE id=%s
+            """
+            valores = (cultura.nome, cultura.tipo, cultura.ciclo_dias, id)
+            cursor.execute(sql, valores)
 
-    cursor.execute("""
-        UPDATE Cultura
-        SET nome=%s,
-            safra=%s,
-            data=%s,
-            quantidade=%s
-        WHERE id=%s
-    """, (
-        cultura.nome,
-        cultura.safra,
-        cultura.data,
-        cultura.quantidade,
-        id
-    ))
+            if cursor.rowcount == 0:
+                conn.rollback()
+                raise HTTPException(status_code=404, detail="Cultura não encontrada")
 
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-    return {"mensagem": "Cultura atualizada"}
+            conn.commit()
+        return {"mensagem": "Cultura atualizada"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar: {e}")
+    finally:
+        conn.close()
 
 
-@router_culturas.delete("/{id}")
+@router_culturas.delete('/{id}')
 def deletar_cultura(id: int):
-
     conn = conectar()
-    cursor = conn.cursor()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM cultura WHERE id=%s", (id,))
 
-    cursor.execute(
-        "DELETE FROM Cultura WHERE id=%s",
-        (id,)
-    )
+            if cursor.rowcount == 0:
+                conn.rollback()
+                raise HTTPException(status_code=404, detail="Cultura não encontrada")
 
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-    return {"mensagem": "Cultura deletada"}
+            conn.commit()
+        return {"mensagem": "Cultura deletada"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar: {e}")
+    finally:
+        conn.close()
