@@ -1,13 +1,15 @@
+import os
 import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def conectar():
     conexao = psycopg2.connect(
-        host="ep-noisy-dawn-atju72se-pooler.c-9.us-east-1.aws.neon.tech",
-        database="neondb",
-        user="neondb_owner",
-        password="npg_gE23GRTHlBkV",
-        port="5432",
-        sslmode="require"
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT"),
     )
-
     return conexao

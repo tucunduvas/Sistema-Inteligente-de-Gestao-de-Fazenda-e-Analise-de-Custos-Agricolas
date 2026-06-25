@@ -10,16 +10,16 @@ class Fazenda(BaseModel):
 
 class Talhao(BaseModel):
     nome: str
-    area: float
-    id_cultura: int
+    area_hectares: float
+    cultura_id: int
     data_plantio: date
-    id_insumo: int
-    id_maquina: int
-    operador_responsavel: str
+    insumo: int
+    maquina_id: int
+    operador: str
 
 class Maquina(BaseModel):
     nome: str
-    categoria: str
+    tipo: str
     marca: str
     ano: date | None = None
 
@@ -55,7 +55,7 @@ class Insumo(BaseModel):
     nome: str
     quantidade: float
     categoria: str | None = None
-    unidade_medida: str | None = None
+    unidade: str | None = None
     preco_unitario: float | None = None
 
 

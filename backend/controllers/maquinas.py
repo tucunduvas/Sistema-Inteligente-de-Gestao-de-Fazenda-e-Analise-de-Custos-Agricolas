@@ -15,13 +15,13 @@ def cadastrar_maquina(maquina: Maquina):
     try:
         with conn.cursor() as cursor:
             sql = """
-                INSERT INTO maquina (nome, categoria, marca, ano)
+                INSERT INTO maquina (nome, tipo, marca, ano)
                 VALUES (%s, %s, %s, %s)
                 RETURNING id
             """
             valores = (
                 maquina.nome,
-                maquina.categoria,
+                maquina.tipo,
                 maquina.marca,
                 maquina.ano
             )
@@ -42,7 +42,7 @@ def listar_maquinas():
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT id, nome, categoria, marca, ano FROM maquina"
+                "SELECT id, nome, tipo, marca, ano FROM maquina"
             )
             return cursor.fetchall()
     finally:
@@ -56,12 +56,12 @@ def atualizar_maquina(id: int, maquina: Maquina):
         with conn.cursor() as cursor:
             sql = """
                 UPDATE maquina
-                SET nome=%s, categoria=%s, marca=%s, ano=%s
+                SET nome=%s, tipo=%s, marca=%s, ano=%s
                 WHERE id=%s
             """
             valores = (
                 maquina.nome,
-                maquina.categoria,
+                maquina.tipo,
                 maquina.marca,
                 maquina.ano,
                 id,
