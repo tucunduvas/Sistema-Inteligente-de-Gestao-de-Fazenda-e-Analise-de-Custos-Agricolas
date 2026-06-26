@@ -43,12 +43,9 @@ export default function Maquinas() {
 
     try {
       await api.post("/maquinas/", {
-        // backend/controllers/maquinas.py espera: modelo, tipo, status
-        // No front coletamos: nome, tipo, marca, ano
         nome: formData.nome,
-        modelo: formData.marca,
         tipo: formData.tipo,
-        status: "Ativo",
+        marca: formData.marca,
         ano: Number(formData.ano),
       });
       
@@ -63,10 +60,6 @@ export default function Maquinas() {
 
   async function eliminarMaquina(id: number) {
     if (!window.confirm("Confirma a eliminação permanente deste registo?")) return;
-    if (!Number.isFinite(id) || id <= 0) {
-      alert("ID inválido para eliminar.");
-      return;
-    }
 
     try {
       await api.delete(`/maquinas/${id}`);

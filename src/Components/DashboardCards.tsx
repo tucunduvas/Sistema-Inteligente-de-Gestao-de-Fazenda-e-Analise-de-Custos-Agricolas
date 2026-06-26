@@ -1,3 +1,4 @@
+import React from 'react';
 import { TrendingUp, Map, ChevronRight } from 'lucide-react';
 
 export default function DashboardCards() {

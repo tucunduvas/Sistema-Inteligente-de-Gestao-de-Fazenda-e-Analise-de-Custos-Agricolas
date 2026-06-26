@@ -40,18 +40,11 @@ export default function Lucro() {
         api.get("/producao/"),
         api.get("/custos/")
       ]);
-
-      const normalizedProducao: Producao[] = Array.isArray(resProducao.data)
-        ? (resProducao.data as Producao[])
-        : [];
-      setProducoes(normalizedProducao);
-
-      const normalizedCustos: Gasto[] = Array.isArray(resCustos.data)
-        ? (resCustos.data as Gasto[])
-        : [];
-
+      
+      setProducoes(resProducao.data);
+      
       // Calcula a soma total de todos os custos registados
-      const somaCustos = normalizedCustos.reduce((acc: number, custo: Gasto) => acc + custo.valor, 0);
+      const somaCustos = resCustos.data.reduce((acc: number, custo: Gasto) => acc + custo.valor, 0);
       setTotalCustos(somaCustos);
       
     } catch (error) {

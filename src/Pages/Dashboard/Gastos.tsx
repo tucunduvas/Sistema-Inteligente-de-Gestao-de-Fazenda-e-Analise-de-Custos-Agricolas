@@ -26,12 +26,7 @@ export default function Gastos() {
     try {
       setLoading(true);
       const response = await api.get("/custos/");
-      // Normaliza resposta (pode vir como tupla/array ou objetos)
-      const data = response.data;
-      const normalized: any[] = Array.isArray(data)
-        ? data
-        : [];
-      setGastos(normalized as Gasto[]);
+      setGastos(response.data);
     } catch (error) {
       console.error("Ocorreu um erro ao obter o histórico de despesas:", error);
     } finally {

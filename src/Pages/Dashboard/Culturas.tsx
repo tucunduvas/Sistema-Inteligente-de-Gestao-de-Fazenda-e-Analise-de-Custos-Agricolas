@@ -44,14 +44,8 @@ export default function Culturas() {
         }
 
         try {
-            // backend/controllers/culturas.py espera apenas: nome, safra, data, quantidade
-            // No front a gente não tem esses campos então vamos preencher valores compatíveis.
-            // - safra e data são opcionais no model, mas o controller tenta inserir.
             await api.post("/culturas/", {
                 nome: formData.nome,
-                safra: "",
-                data: null,
-                quantidade: 0,
                 tipo: formData.tipo,
                 ciclo_dias: Number(formData.ciclo_dias),
             });
@@ -60,8 +54,8 @@ export default function Culturas() {
             setFormData({ nome: "", tipo: "", ciclo_dias: "" }); // Limpa o form
             buscarCulturas(); // Atualiza a lista
         } catch (error) {
-        console.error("Erro ao cadastrar cultura:", error);
-        alert("Erro ao cadastrar cultura.");
+            console.error("Erro ao cadastrar cultura:", error);
+            alert("Erro ao cadastrar cultura.");
         }
     }
 

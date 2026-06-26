@@ -1,75 +1,33 @@
 import Button from "../../Components/componentsCadTalhoes/Button";
 import SectionCard from "../../Components/SectionCard";
-import { Leaf, Calendar, Droplet, X, Save } from "lucide-react";
+import { Leaf, Calendar, Droplet, User, X, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../../services/api";
-import { getErrorMessage } from "./utils/validateApi";
-
-type TalhaoForm = {
-  id: number;
-  area: number | "";
-  tipoCultura: string;
-  idade: number | "";
-  volumeEstimado: number | "";
-  idFazenda: number | "";
-};
 
 export default function CadTalhoes() {
-  const [culturasOptions, setCulturasOptions] = useState<any[]>([]);
-
-  const [formData, setFormData] = useState<TalhaoForm>({
-    id: 0,
-    area: "",
-    tipoCultura: "",
-    idade: "",
-    volumeEstimado: "",
-    idFazenda: "",
+  //criando um estado para armazenar os dados do formulário
+  const [formData, setFormData] = useState({
+    id:0 , 
+    nome: "",
+    area_hectares: "",
+    cultura_id: "",
+    data_plantio: "",
+    insumo: "",
+    maquina_id: "",
+    operador: "",
   });
-
+  //requisição de post ok
   async function salvarTalhao() {
     try {
-      const idFazendaNum = formData.idFazenda === "" ? NaN : Number(formData.idFazenda);
-      if (!Number.isFinite(idFazendaNum) || idFazendaNum <= 0) {
-        alert("Informe um idFazenda válido (existente no cadastro de Fazendas).");
-        return;
-      }
-
-      const payload = {
-        area: Number(formData.area),
-        tipoCultura: formData.tipoCultura,
-        idade: Number(formData.idade),
-        volumeEstimado: Number(formData.volumeEstimado),
-        idFazenda: idFazendaNum,
-      };
-
-      if (!Number.isFinite(payload.area) || payload.area <= 0) {
-        alert("Informe uma Área (Hectares) válida (> 0)." );
-        return;
-      }
-      if (!Number.isFinite(payload.idade) || payload.idade <= 0) {
-        alert("Informe uma Idade válida (> 0)." );
-        return;
-      }
-      if (!Number.isFinite(payload.volumeEstimado) || payload.volumeEstimado <= 0) {
-        alert("Informe um Volume Estimado válido (> 0)." );
-        return;
-      }
-      if (!payload.tipoCultura) {
-        alert("Selecione o Tipo de Cultura." );
-        return;
-      }
-
-      const response = await api.post("/talhoes/", payload);
-      console.log("Talhão cadastrado!:", response.data, payload);
+      const response = await api.post("/talhoes/", formData);
+      console.log("Talhão cadastrado!:", response.data, formData);
       alert("Talhão salvo com sucesso!");
-      await buscarTalhoes();
     } catch (error) {
       console.error(error);
-      alert(getErrorMessage(error));
+      alert("Erro ao cadastrar");
     }
   }
-
-
+  //requisição de get ok
   async function buscarTalhoes() {
     try {
       const response = await api.get("/talhoes/");
@@ -78,215 +36,216 @@ export default function CadTalhoes() {
       console.error(error);
     }
   }
-
-
+  //requisição de put ok (avaliando se necessario)
   async function atualizarTalhao() {
     try {
-      const payload = {
-        area: Number(formData.area),
-        tipoCultura: formData.tipoCultura,
-        idade: Number(formData.idade),
-        volumeEstimado: Number(formData.volumeEstimado),
-        idFazenda: Number(formData.idFazenda),
-      };
-
-      const response = await api.put(`/talhoes/${formData.id}/`, payload);
-      console.log("Talhão atualizado!", response.data, payload);
-      alert("Talhão atualizado com sucesso!");
-      await buscarTalhoes();
+      const response = await api.put(`/talhoes/${formData.id}/`, formData);
+      console.log("Talhão atualizado!", response.data, formData);
     } catch (error) {
       console.error(error);
       alert("Erro ao atualizar!");
     }
   }
-
+  //requisição de delete ok 
   async function deletarTalhao(id: number) {
     try {
       await api.delete(`/talhoes/${id}/`);
+
       console.log("Talhão deletado!", id);
       alert("Talhão deletado com sucesso!");
-      await buscarTalhoes();
     } catch (error) {
       console.error(error);
       alert("Erro ao deletar!");
     }
   }
-
-  async function buscarCulturas() {
-    try {
-      const response = await api.get('/culturas/');
-      setCulturasOptions(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Erro ao buscar culturas:', error);
-    }
-  }
-
-
+{/*usando o useEffect para chamar a função de buscar os talhões quando o componente for montado */}
   useEffect(() => {
     buscarTalhoes();
-    buscarCulturas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
+  //chamando a função para buscar os talhões cadastrados
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) {
     const { name, value } = e.target;
 
-    setFormData((prev) => {
-      const next = { ...prev };
-
-      if (name === "area") next.area = value === "" ? "" : Number(value);
-      else if (name === "idade") next.idade = value === "" ? "" : Number(value);
-      else if (name === "volumeEstimado")
-        next.volumeEstimado = value === "" ? "" : Number(value);
-      else if (name === "idFazenda") next.idFazenda = value === "" ? "" : Number(value);
-      else if (name === "tipoCultura") next.tipoCultura = value;
-      else if (name === "id") next.id = value === "" ? 0 : Number(value);
-
-      return next;
-
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   }
 
   return (
     <div className="min-h-screen px-8 py-10">
       <div className="max-w-7xl mx-auto space-y-10">
+        {/* Card principal */}
         <div className="rounded-2xl p-10">
+          {/* Cabeçalho */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 mb-12">
             <div className="space-y-3">
               <h1 className="text-4xl font-bold text-gray-900">
+                {" "}
                 Novo Cadastro de Talhão
               </h1>
               <p className="max-w-1xl text-gray-600">
-                Preencha os campos para cadastrar/atualizar o talhão.
+                {" "}
+                Preencha as informações abaixo para registrar uma nova área
+                produtiva ou atualizar uma cultura existente.
               </p>
             </div>
           </div>
-
+          {/* Seções */}
           <div className="space-y-10">
+            {/* Informações Gerais */}
             <SectionCard
               bgIcon="bg-green-100"
               icon={<Leaf size={22} className="text-green-600" />}
               title="Informações Gerais"
-              subtitle="Dados básicos do talhão."
+              subtitle="Identifique o local e a extensão da área."
             >
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Área (Hectares)
+                    Nome do Talhão
                   </label>
                   <input
-                    name="area"
-                    value={formData.area}
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    type="text"
+                    placeholder="Ex: Talhão Norte 01"
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Área Total (Hectares)
+                  </label>
+                  <input
+                    name="area_hectares"
+                    value={formData.area_hectares}
                     onChange={handleChange}
                     type="number"
                     placeholder="0.00"
                     className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    ID da Fazenda
-                  </label>
-                  <input
-                    name="idFazenda"
-                    value={formData.idFazenda}
-                    onChange={handleChange}
-                    type="number"
-                    placeholder="Ex: 1"
-                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
-                  />
-                </div>
               </div>
             </SectionCard>
 
+            {/* Planejamento de Safra */}
             <SectionCard
               bgIcon="bg-blue-100"
               icon={<Calendar size={22} className="text-blue-600" />}
               title="Planejamento de Safra"
-              subtitle="Cultura e parâmetros do talhão."
+              subtitle="Defina a cultura e o cronograma de plantio."
             >
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Tipo de Cultura
+                    Cultura Plantada
                   </label>
-
                   <select
-                    name="tipoCultura"
-                    value={formData.tipoCultura}
+                    name="cultura_id"
+                    value={formData.cultura_id}
                     onChange={handleChange}
                     className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
                   >
-                    <option value="">Selecione a cultura</option>
-                    {culturasOptions.map((c) => (
-                      <option key={c.id ?? c.nome ?? c.tipo} value={c.nome ?? c.tipo}>
-                        {c.nome ?? c.tipo}
-                      </option>
-                    ))}
+                    <option value={1}>Selecione a cultura</option>
+                    <option value={2}>Soja</option>
+                    <option value={3}>Milho</option>
+                    <option value={4}>Feijão</option>
                   </select>
                 </div>
-
-
-
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Idade
+                    Data de Plantio
                   </label>
                   <input
-                    name="idade"
-                    value={formData.idade}
+                    name="data_plantio"
+                    value={formData.data_plantio}
                     onChange={handleChange}
-                    type="number"
-                    placeholder="Ex: 45"
+                    type="date"
                     className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
                   />
                 </div>
               </div>
             </SectionCard>
 
+            {/* Recursos e Operação */}
             <SectionCard
               bgIcon="bg-yellow-100"
               icon={<Droplet size={22} className="text-yellow-600" />}
-              title="Volume Estimado"
-              subtitle="Informação utilizada no cálculo/gestão."
+              title="Recursos e Operação"
+              subtitle="Insumos, maquinário e pessoal responsável."
             >
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Volume Estimado
+                    Insumos Utilizados
                   </label>
-                  <input
-                    name="volumeEstimado"
-                    value={formData.volumeEstimado}
+                  <select
+                    name="insumo"
+                    value={formData.insumo}
                     onChange={handleChange}
-                    type="number"
-                    placeholder="0.00"
                     className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
-                  />
+                  >
+                    <option value="">Selecione o insumo principal</option>
+                    <option value="Adubo">Adubo</option>
+                    <option value="Herbicida">Herbicida</option>
+                    <option value="Sementes">Sementes</option>
+                  </select>
+                  <p className="text-gray-500 text-sm">
+                    Estoque atual: 1000 kg
+                  </p>
                 </div>
-
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    ID do Talhão (para Atualizar/Excluir)
+                    Máquina Utilizada
                   </label>
-                  <input
-                    name="id"
-                    value={formData.id}
+                  <select
+                    name="maquina_id"
+                    value={formData.maquina_id}
                     onChange={handleChange}
-                    type="number"
-                    placeholder="Ex: 1"
                     className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                  >
+                    <option value="">Selecione a máquina</option>
+                    <option value={1}>Trator</option>
+                    <option value={2}>Plantadeira</option>
+                    <option value={3}>Pulverizador</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Operador Responsável
+                </label>
+                <div className="relative">
+                  <User
+                    size={20}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Nome completo do operador"
+                    name="operador"
+                    value={formData.operador}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 pl-10 pr-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
                   />
                 </div>
               </div>
             </SectionCard>
           </div>
-
+          {/* teste para mostrar os dados do formulário em tempo real */}
+          
+            {/* <pre>{JSON.stringify(formData, null, 2)}</pre> */}
+          
           <div className="mt-12 flex justify-end gap-2.5">
+
+            {/*vai excluir o talhão com id 1, teste para mostrar a função de
+            delete funcionando! depois muda para excluir o talhão selecionado */}
+
             <div onClick={() => deletarTalhao(Number(formData.id))}>
               <Button
                 icon={<X size={15} />}
@@ -296,8 +255,7 @@ export default function CadTalhoes() {
                 bgHover="hover:bg-gray-600"
               />
             </div>
-
-            <div onClick={atualizarTalhao}>
+              <div onClick={atualizarTalhao}>
               <Button
                 icon={<Save size={15} color="white" />}
                 bgColor="bg-blue-600"
@@ -306,7 +264,6 @@ export default function CadTalhoes() {
                 bgHover="hover:bg-blue-700"
               />
             </div>
-
             <div onClick={salvarTalhao}>
               <Button
                 icon={<Save size={15} color="white" />}
@@ -322,4 +279,3 @@ export default function CadTalhoes() {
     </div>
   );
 }
-

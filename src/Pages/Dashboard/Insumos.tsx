@@ -45,19 +45,14 @@ export default function Insumos() {
 
     try {
       await api.post("/insumos/", {
-        // backend/controllers/insumos.py espera: nome, tipo, custo, quantidade
-        // No front coletamos: categoria, unidade, preco_unitario
         nome: formData.nome,
-        tipo: formData.categoria,
-        custo: Number(formData.preco_unitario),
-        quantidade: Number(formData.quantidade),
-        // campos extras (podem ser ignorados pelo controller, mas ajudam caso algum serializador use)
         categoria: formData.categoria,
+        quantidade: Number(formData.quantidade),
         unidade: formData.unidade,
         preco_unitario: Number(formData.preco_unitario),
       });
       
-      alert("Insumo registado com sucesso no estoque.");
+      alert("Insumo registado com sucesso no stock.");
       setFormData({ nome: "", categoria: "", quantidade: "", unidade: "", preco_unitario: "" }); 
       obterInsumos(); 
     } catch (error) {
