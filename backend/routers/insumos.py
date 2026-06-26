@@ -15,7 +15,7 @@ def cadastrar_insumo(insumo: Insumo):
     try:
         with conn.cursor() as cursor:
             sql = """
-                INSERT INTO insumo (nome, quantidade, categoria, unidade_medida, preco_unitario)
+                INSERT INTO insumo (nome, quantidade, categoria, unidade, preco_unitario)
                 VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
             """
@@ -23,7 +23,7 @@ def cadastrar_insumo(insumo: Insumo):
                 insumo.nome,
                 insumo.quantidade,
                 insumo.categoria,
-                insumo.unidade_medida,
+                insumo.unidade,
                 insumo.preco_unitario,
             )
             cursor.execute(sql, valores)
@@ -43,7 +43,7 @@ def listar_insumos():
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT id, nome, quantidade, categoria, unidade_medida, preco_unitario
+                SELECT id, nome, quantidade, categoria, unidade, preco_unitario
                 FROM insumo
             """)
             return cursor.fetchall()
@@ -58,14 +58,14 @@ def atualizar_insumo(id: int, insumo: Insumo):
         with conn.cursor() as cursor:
             sql = """
                 UPDATE insumo
-                SET nome=%s, quantidade=%s, categoria=%s, unidade_medida=%s, preco_unitario=%s
+                SET nome=%s, quantidade=%s, categoria=%s, unidade=%s, preco_unitario=%s
                 WHERE id=%s
             """
             valores = (
                 insumo.nome,
                 insumo.quantidade,
                 insumo.categoria,
-                insumo.unidade_medida,
+                insumo.unidade,
                 insumo.preco_unitario,
                 id,
             )

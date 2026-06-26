@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 import datetime
 from datetime import date
+from pydantic import BaseModel, EmailStr
 
 class Fazenda(BaseModel):
     nome: str
@@ -13,7 +14,7 @@ class Talhao(BaseModel):
     area_hectares: float
     cultura_id: int
     data_plantio: date
-    insumo: int
+    insumo: str
     maquina_id: int
     operador: str
 
@@ -21,8 +22,23 @@ class Maquina(BaseModel):
     nome: str
     tipo: str
     marca: str
-    ano: date | None = None
+    ano: int 
+    
+class Producao(BaseModel):
+    cultura: str
+    talhao: str | None = None
+    quantidade: float
+    unidade: str = "sacas"
+    valor_unitario: float
+    data: date
 
+
+class Custo(BaseModel):
+    categoria: str
+    descricao: str
+    valor: float
+    data: date
+    
 class Operador(BaseModel):
     nome: str
     cpf: str
@@ -61,12 +77,26 @@ class Insumo(BaseModel):
 
 class Atividade(BaseModel):
     tipo: str
-    data: str
-    horaInicio: str | None = ""
-    horaFim: str | None = ""
-    custoTotal: float | None = 0
+    data: date
+    talhao: str
     descricao: str
-    idOperador: int | None = None
-    # Compatibilidade com o front atual (Atividades.tsx)
-    talhao: str | None = None
 
+
+class Login(BaseModel):
+    email: EmailStr
+    senha: str
+
+
+class Cadastro(BaseModel):
+    email: EmailStr
+    senha: str
+
+
+class TokenResponse(BaseModel):
+    token: str
+    usuario: str
+
+
+class UsuarioResponse(BaseModel):
+    id: int
+    email: str

@@ -1,12 +1,12 @@
 import os
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from db import conectar
 import psycopg2
+from models.model import Login, Cadastro, UsuarioResponse, TokenResponse
 
 load_dotenv()
 
@@ -21,25 +21,6 @@ EXPIRACAO_MINUTOS = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
-class Login(BaseModel):
-    email: EmailStr
-    senha: str
-
-
-class Cadastro(BaseModel):
-    email: EmailStr
-    senha: str
-
-
-class TokenResponse(BaseModel):
-    token: str
-    usuario: str
-
-
-class UsuarioResponse(BaseModel):
-    id: int
-    email: str
 
 
 def buscar_usuario_por_email(email: str):

@@ -12,16 +12,16 @@ router_talhoes = APIRouter(
 @router_talhoes.post("/", status_code=status.HTTP_201_CREATED)
 def cadastrar_talhao(talhao: Talhao):
     conn = conectar()
+
     try:
         with conn.cursor() as cursor:
-            sql = """
+            cursor.execute("""
                 INSERT INTO talhao
-                (nome, area, id_cultura, data_plantio, id_insumo, id_maquina, operador_responsavel)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (nome, area_hectares, cultura_id, data_plantio,
+                 insumo, maquina_id, operador)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
                 RETURNING id
-            """
-
-            valores = (
+            """, (
                 talhao.nome,
                 talhao.area_hectares,
                 talhao.cultura_id,
@@ -29,17 +29,22 @@ def cadastrar_talhao(talhao: Talhao):
                 talhao.insumo,
                 talhao.maquina_id,
                 talhao.operador,
-            )
+            ))
 
-            cursor.execute(sql, valores)
             novo_id = cursor.fetchone()[0]
             conn.commit()
 
-        return {"mensagem": "Talhão cadastrado", "id": novo_id}
+            return {
+                "mensagem": "Talhão cadastrado com sucesso",
+                "id": novo_id
+            }
 
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao cadastrar: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
     finally:
         conn.close()
@@ -51,27 +56,30 @@ def listar_talhoes():
 
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+
             cursor.execute("""
                 SELECT
                     t.id,
                     t.nome,
-                    t.area AS area_hectares,
+                    t.area_hectares,
                     t.data_plantio,
-                    t.operador_responsavel AS operador,
+                    t.insumo,
+                    t.operador,
 
-                    c.id AS cultura_id,
+                    c.id   AS cultura_id,
                     c.nome AS cultura,
 
-                    i.id AS insumo,
-                    i.nome AS nome_insumo,
-
-                    m.id AS maquina_id,
+                    m.id   AS maquina_id,
                     m.nome AS maquina
 
                 FROM talhao t
-                JOIN cultura c ON c.id = t.id_cultura
-                JOIN insumo i ON i.id = t.id_insumo
-                JOIN maquina m ON m.id = t.id_maquina
+                INNER JOIN cultura c
+                    ON c.id = t.cultura_id
+
+                INNER JOIN maquina m
+                    ON m.id = t.maquina_id
+
+                ORDER BY t.id;
             """)
 
             return cursor.fetchall()
@@ -82,24 +90,24 @@ def listar_talhoes():
 
 @router_talhoes.put("/{id}")
 def atualizar_talhao(id: int, talhao: Talhao):
+
     conn = conectar()
 
     try:
         with conn.cursor() as cursor:
-            sql = """
+
+            cursor.execute("""
                 UPDATE talhao
                 SET
                     nome=%s,
-                    area=%s,
-                    id_cultura=%s,
+                    area_hectares=%s,
+                    cultura_id=%s,
                     data_plantio=%s,
-                    id_insumo=%s,
-                    id_maquina=%s,
-                    operador_responsavel=%s
+                    insumo=%s,
+                    maquina_id=%s,
+                    operador=%s
                 WHERE id=%s
-            """
-
-            valores = (
+            """, (
                 talhao.nome,
                 talhao.area_hectares,
                 talhao.cultura_id,
@@ -107,10 +115,8 @@ def atualizar_talhao(id: int, talhao: Talhao):
                 talhao.insumo,
                 talhao.maquina_id,
                 talhao.operador,
-                id,
-            )
-
-            cursor.execute(sql, valores)
+                id
+            ))
 
             if cursor.rowcount == 0:
                 conn.rollback()
@@ -121,14 +127,19 @@ def atualizar_talhao(id: int, talhao: Talhao):
 
             conn.commit()
 
-        return {"mensagem": "Talhão atualizado"}
+            return {
+                "mensagem": "Talhão atualizado com sucesso"
+            }
 
     except HTTPException:
         raise
 
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
     finally:
         conn.close()
@@ -136,10 +147,12 @@ def atualizar_talhao(id: int, talhao: Talhao):
 
 @router_talhoes.delete("/{id}")
 def deletar_talhao(id: int):
+
     conn = conectar()
 
     try:
         with conn.cursor() as cursor:
+
             cursor.execute(
                 "DELETE FROM talhao WHERE id=%s",
                 (id,)
@@ -154,14 +167,19 @@ def deletar_talhao(id: int):
 
             conn.commit()
 
-        return {"mensagem": "Talhão deletado"}
+            return {
+                "mensagem": "Talhão removido com sucesso"
+            }
 
     except HTTPException:
         raise
 
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao deletar: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
     finally:
         conn.close()
