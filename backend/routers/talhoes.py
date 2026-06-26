@@ -73,10 +73,10 @@ def listar_talhoes():
                     m.nome AS maquina
 
                 FROM talhao t
-                INNER JOIN cultura c
+                LEFT JOIN cultura c
                     ON c.id = t.cultura_id
 
-                INNER JOIN maquina m
+                LEFT JOIN maquina m
                     ON m.id = t.maquina_id
 
                 ORDER BY t.id;
